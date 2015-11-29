@@ -32,6 +32,18 @@ fs.readFile("./database",'utf8', function(err, data) {
     db = JSON.parse(data);
     console.log("Database Loaded");
 
+    if(!db.me)
+    {   
+        console.log("Getting Telegram and Twitter user info");
+        db.me = {};
+
+        bot.getMe().then(function(user){
+            db.me.telegram = user;
+        });
+        twitter.get('account/verify_credentials', function(error, user){
+            db.me.twitter = user;
+        });
+    }
     updateMentions();
 });
 
@@ -46,7 +58,9 @@ function updateMentions(){
 	  	if (!(db.mentions.indexOf(tweet.id) > -1))
 	  	{
 	  		db.mentions.push(tweet.id);
-	  		bot.sendMessage("-15689316", tweet.user.name + " (" + tweet.user.screen_name + "): " + tweet.text);
+            db.chats.forEach(function(chat){
+                bot.sendMessage(chat, tweet.user.name + " (" + tweet.user.screen_name + "): " + tweet.text);
+            });
 	  		console.log("NEW MENTION - " + tweet.user.name + " (" + tweet.user.screen_name + "):" + tweet.text);
 	  	}
 	  }
@@ -72,9 +86,11 @@ process.on('SIGINT', function(){
 });
 
 bot.on('message', function(msg) {
-    if (msg.text){
+    if (msg.text)
+    {
         var matchSendTweet = util.parseCommand(msg.text,["tweet","tw"], {joinParams: true});
-        if(matchSendTweet){ 
+        if(matchSendTweet)
+        { 
             tweet = matchSendTweet[1]; 
 
             if(tweet.length > 140)
@@ -93,4 +109,38 @@ bot.on('message', function(msg) {
             });
         }
     }
+
+    if(msg.new_chat_participant)
+    {
+
+        if(db.me)
+        {
+            if(msg.new_chat_participant.id == db.me.telegram.id)
+            {
+                if(!db.chats)
+                    db.chats = [];
+
+                db.chats.push(msg.chat.id);
+                console.log("Joined Chat " + msg.chat.id);
+                console.log("Using Twitter as [" + db.me.twitter.screen_name + "](https://twitter.com/"+ db.me.twitter.screen_name + ")");
+                bot.sendMessage(msg.chat.id, "Using Twitter as [" + db.me.twitter.screen_name + "](https://twitter.com/"+ db.me.twitter.screen_name + ")", {parse_mode: "Markdown"});
+            }
+        }
+
+    }
+    else if(msg.left_chat_participant)
+    {
+        if(db.me)
+        {
+            if(msg.left_chat_participant.id == db.me.telegram.id)
+            {
+                if(db.chats)
+                {
+                    console.log("Left Chat " + msg.chat.id);
+                    db.chats.splice(db.chats.indexOf(msg.chat.id), 1); 
+                }
+            }
+        }
+    }
+
 });
