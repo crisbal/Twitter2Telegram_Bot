@@ -89,6 +89,8 @@ bot.on('message', function(msg) {
     if (msg.text)
     {
         var matchSendTweet = util.parseCommand(msg.text,["tweet","tw"], {joinParams: true});
+        var matchFollow = util.parseCommand(msg.text,["follow","fw"]);
+        var matchUnfollow = util.parseCommand(msg.text,["unfollow","uw"]);
         if(matchSendTweet)
         { 
             tweet = matchSendTweet[1]; 
@@ -106,6 +108,26 @@ bot.on('message', function(msg) {
                     bot.sendMessage(msg.chat.id, "Error Tweeting!");
                 }
                 bot.sendMessage(msg.chat.id, "[Tweet Inviato, stronzi!](https://twitter.com/"+ tweet.user.screen_name +"/status/" + tweet.id_str + ")", {parse_mode: "Markdown"});
+            });
+        }
+        else if(matchFollow)
+        {
+            who = matchFollow[1]; 
+            twitter.post('friendships/create', {screen_name: who}, function(error, user){
+                if (error) {
+                    bot.sendMessage(msg.chat.id, "Error Following!");
+                }
+                bot.sendMessage(msg.chat.id, "Now Following [" + user.screen_name + "](https://twitter.com/"+ user.screen_name + ")!", {parse_mode: "Markdown"});
+            });
+        }
+        else if(matchUnfollow)
+        {
+            who = matchUnfollow[1]; 
+            twitter.post('friendships/destroy', {screen_name: who}, function(error, user){
+                if (error) {
+                    bot.sendMessage(msg.chat.id, "Error Unfollowing!");
+                }
+                bot.sendMessage(msg.chat.id, "Unfollowed [" + user.screen_name + "](https://twitter.com/"+ user.screen_name + ")!", {parse_mode: "Markdown"});
             });
         }
     }
