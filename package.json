@@ -1,0 +1,15 @@
+{
+  "name": "twitter2telegrambot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.17.0",
+    "twitter": "^1.2.5"
+  }
+}
